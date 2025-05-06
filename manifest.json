@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "금융교육협회-자동수강봇",
+  "name": "금읍투자교읍원-자동수강봇",
   "version": "1.0",
   "description": "다음영상 자동 넘어가기 / 다음차시 자동 넘어가기",
   "permissions": ["storage", "scripting", "activeTab"],
