@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "금융교육협회-자동수강봇",
+  "version": "1.0",
+  "description": "다음영상 자동 넘어가기 / 다음차시 자동 넘어가기",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "host_permissions": ["https://www.kifin.or.kr/usr/*"],
+  "content_scripts": [
+    {
+      "matches": ["https://www.kifin.or.kr/usr/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
