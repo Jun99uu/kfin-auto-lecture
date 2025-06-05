@@ -57,10 +57,16 @@ function clickNextButtonIfExists() {
     }, 1000);
   }
 
-  const nextBtn = document.querySelector(".btn_modal2.w100");
+  const nextBtn = document.getElementById("nextBtn");
   if (nextBtn) {
     console.log("⏭️ 다음 버튼 감지");
     nextBtn.click();
+  }
+
+  const checkBtn = document.querySelector(".btn_modal2.w100");
+  if (checkBtn) {
+    console.log("✅ 확인 버튼 감지");
+    checkBtn.click();
   }
 }
 
