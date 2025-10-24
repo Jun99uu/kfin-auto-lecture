@@ -1,6 +1,9 @@
 let autoClickInterval = null;
 let autoLectureInterval = null;
 
+let playbackMonitorInterval = null;
+let closeScheduled = false;
+
 // 마우스 터치 이벤트 (강제 발생)
 function simulateClick(element) {
   if (element) {
@@ -95,6 +98,92 @@ function openNextLecture() {
   }
 }
 
+// MM:SS형식 문자열을 초로 변환
+function timeStringToSeconds(timeStr) {
+  if (!timeStr) return NaN;
+  const parts = timeStr.split(":").map((p) => parseInt(p, 10));
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return NaN;
+}
+
+// 플레이타임 감시 시작
+function startPlaybackMonitor() {
+  if (playbackMonitorInterval) return; // 이미 감시 중이면 중복 시작 방지
+
+  playbackMonitorInterval = setInterval(() => {
+    const playTimeEl = document.querySelector("span.play_time");
+    const currentEl = document.getElementById("currentFramePage");
+    const totalEl = document.getElementById("totalFramePage");
+
+    if (!playTimeEl) return;
+
+    const txt = playTimeEl.textContent || "";
+    const parts = txt.split("/");
+    if (parts.length < 2) return;
+
+    const elapsedStr = parts[0].trim();
+    const totalStr = parts[1].trim();
+
+    const elapsedSec = timeStringToSeconds(elapsedStr);
+    const totalSec = timeStringToSeconds(totalStr);
+
+    console.log(elapsedStr, totalStr);
+
+    if (isNaN(elapsedSec) || isNaN(totalSec)) return;
+
+    // 현재 차시 / 총 차시 확인
+    let currentPage = null;
+    let totalPage = null;
+    if (currentEl) {
+      const v = parseInt(currentEl.textContent.trim(), 10);
+      if (!isNaN(v)) currentPage = v;
+    }
+    if (totalEl) {
+      const ttxt = totalEl.textContent.replace("/", "").trim();
+      const v2 = parseInt(ttxt, 10);
+      if (!isNaN(v2)) totalPage = v2;
+    }
+
+    const isLastChapter =
+      currentPage !== null && totalPage !== null && currentPage >= totalPage;
+
+    if (elapsedSec >= totalSec) {
+      console.log(
+        `⏱ 재생 완료 감지 (elapsed ${elapsedStr} / total ${totalStr}), lastChapter=${isLastChapter}`
+      );
+
+      if (isLastChapter) {
+        if (!closeScheduled) {
+          closeScheduled = true;
+          console.log("🗓 마지막 차시 재생 완료 — 3초 후 팝업 닫기 예약");
+          // 3초 후 창 닫기
+          setTimeout(() => {
+            try {
+              // 종료 전에 자동 클릭 루틴 중단
+              stopAutoClick();
+              console.log("🔒 팝업을 닫습니다.");
+              window.close();
+            } catch (e) {
+              console.error("팝업 닫기 실패:", e);
+            }
+          }, 3000);
+        }
+      } else {
+        console.log("➡ 마지막 차시 아님 — 다음 차시로 이동할 것");
+      }
+    }
+  }, 1000); // 1초마다 체크
+}
+
+function stopPlaybackMonitor() {
+  if (playbackMonitorInterval) {
+    clearInterval(playbackMonitorInterval);
+    playbackMonitorInterval = null;
+  }
+  closeScheduled = false;
+}
+
 function startAutoClick() {
   if (!autoClickInterval) {
     autoClickInterval = setInterval(clickNextButtonIfExists, 3000);
@@ -105,6 +194,9 @@ function startAutoClick() {
     autoLectureInterval = setInterval(openNextLecture, 5000);
     console.log("✅ 다음 차시 자동 열기 시작");
   }
+
+  // 팝업(강의)에서 재생 감시가 가능하면 감시 시작
+  startPlaybackMonitor();
 }
 
 function stopAutoClick() {
@@ -119,6 +211,8 @@ function stopAutoClick() {
     autoLectureInterval = null;
     console.log("🛑 다음 차시 자동 열기 중단");
   }
+
+  stopPlaybackMonitor();
 }
 
 // 초기 상태 확인
